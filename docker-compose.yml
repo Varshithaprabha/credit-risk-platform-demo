@@ -1,0 +1,17 @@
+services:
+  credit-risk-app:
+    build: .
+    container_name: credit_risk_platform
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./documents:/app/documents
+    env_file:
+      - .env
+    environment:
+      - RAW_DATA_DIR=/app/data
+      - DATABASE_PATH=/app/data/credit_risk.db
+      - MODELS_DIR=/app/models
+    restart: unless-stopped

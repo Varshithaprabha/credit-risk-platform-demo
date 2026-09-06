@@ -1,0 +1,21 @@
+# datasets
+data/*.csv
+data/*.db
+data/*.zip
+
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# env
+.env
+
+# notebooks
+.ipynb_checkpoints/
+
+# os
+.DS_Store
