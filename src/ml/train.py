@@ -69,7 +69,9 @@ def train(save_dir: Path = MODELS_DIR) -> dict:
         colsample_bytree=0.8,
         scale_pos_weight=scale_pos_weight,
         random_state=RANDOM_STATE,
-        n_jobs=-1,
+        n_jobs=2,  # capped rather than -1 (all cores) — safer on memory-limited
+                   # containers where more threads means more peak memory, not
+                   # necessarily more speed
     )
 
     log.info("Training LightGBM...")
