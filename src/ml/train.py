@@ -25,7 +25,7 @@ from sklearn.model_selection import train_test_split
 from src.data.loader import load_main_table
 from src.data.preprocessor import full_pipeline, TARGET, ID_COL
 from src.ml.evaluate import evaluate_model
-from src.utils.config import MODELS_DIR, RANDOM_STATE
+from src.utils.config import MODELS_DIR, RANDOM_STATE, MAX_TRAIN_ROWS
 from src.utils.logger import get_logger
 
 log = get_logger(__name__)
@@ -34,6 +34,15 @@ log = get_logger(__name__)
 def train(save_dir: Path = MODELS_DIR) -> dict:
     log.info("Loading main application table from SQLite...")
     raw = load_main_table()
+
+    if MAX_TRAIN_ROWS and len(raw) > MAX_TRAIN_ROWS:
+        log.warning(
+            f"MAX_TRAIN_ROWS={MAX_TRAIN_ROWS} is set — subsampling from "
+            f"{len(raw):,} to {MAX_TRAIN_ROWS:,} rows. This is meant for "
+            f"memory-constrained deployments; leave MAX_TRAIN_ROWS unset "
+            f"locally to train on the full dataset."
+        )
+        raw = raw.sample(n=MAX_TRAIN_ROWS, random_state=RANDOM_STATE)
 
     log.info("Running preprocessing pipeline (clean -> engineer -> encode/impute)...")
     df, encoders = full_pipeline(raw)

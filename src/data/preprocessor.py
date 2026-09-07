@@ -20,8 +20,21 @@ ID_COL = "SK_ID_CURR"
 DAYS_EMPLOYED_ANOMALY = 365243
 
 
+def _downcast_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    """Shrink memory footprint by downcasting to the smallest safe numeric
+    dtype (float64->float32, int64->smaller int). Matters a lot on
+    memory-constrained deployments (e.g. free-tier cloud hosting) where the
+    full dataframe getting copied a few times during the pipeline can add up."""
+    for col in df.select_dtypes(include=["float64"]).columns:
+        df[col] = df[col].astype("float32")
+    for col in df.select_dtypes(include=["int64"]).columns:
+        df[col] = pd.to_numeric(df[col], downcast="integer")
+    return df
+
+
 def clean(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
+    df = _downcast_dtypes(df)
 
     # 1. Fix the DAYS_EMPLOYED anomaly (~18% of rows in the real dataset)
     if "DAYS_EMPLOYED" in df.columns:

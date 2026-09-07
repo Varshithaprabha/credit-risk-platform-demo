@@ -29,6 +29,11 @@ MAX_SQL_RESULT_ROWS = int(os.getenv("MAX_SQL_RESULT_ROWS", "200"))
 # password before the app renders anything.
 APP_PASSWORD = os.getenv("APP_PASSWORD", "")
 
+# Optional cap on training rows, for memory-constrained deployments (e.g.
+# free-tier cloud hosting where LightGBM training on the full ~300k rows can
+# run out of memory). Leave unset for local/Docker use to train on all data.
+MAX_TRAIN_ROWS = int(os.getenv("MAX_TRAIN_ROWS")) if os.getenv("MAX_TRAIN_ROWS") else None
+
 RANDOM_STATE = 42
 
 # Core table we build the model + chatbot on top of.
