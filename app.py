@@ -19,7 +19,7 @@ from src.data.loader import build_database, load_main_table, get_schema_summary
 from src.data.preprocessor import full_pipeline, TARGET, ID_COL, categorize_features, clean, engineer_features
 from src.ml.predict import RiskScorer
 from src.ml.explain import RiskExplainer
-from src.utils.config import DATABASE_PATH, MODELS_DIR, RAW_DATA_DIR
+from src.utils.config import DATABASE_PATH, MODELS_DIR, RAW_DATA_DIR, APP_PASSWORD, DB_SAMPLE_FRAC
 from src.utils.logger import get_logger
 
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
@@ -36,6 +36,28 @@ st.set_page_config(
     page_icon="🏦",
     layout="wide",
 )
+
+# ------------------------------------------------------------- optional auth
+# Only active when APP_PASSWORD is set (e.g. as a secret on a public
+# deployment). Left unset for local/Docker use, so an evaluator running
+# `docker-compose up` sees the app immediately with no login step.
+if APP_PASSWORD and not st.session_state.get("authenticated"):
+    st.markdown(
+        "<h2 style='text-align:center; margin-top:15vh;'>🏦 Credit Risk Platform</h2>"
+        "<p style='text-align:center; color:#5A6B67;'>Enter the password to continue.</p>",
+        unsafe_allow_html=True,
+    )
+    _, mid, _ = st.columns([1, 1, 1])
+    with mid:
+        pw = st.text_input("Password", type="password", label_visibility="collapsed",
+                            placeholder="Password")
+        if st.button("Enter", use_container_width=True):
+            if pw == APP_PASSWORD:
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Incorrect password.")
+    st.stop()
 
 CUSTOM_CSS = """
 <style>
@@ -147,13 +169,16 @@ section = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 st.sidebar.caption("SYSTEM STATUS")
+if DB_SAMPLE_FRAC:
+    st.sidebar.caption(f"⚙️ DB_SAMPLE_FRAC={DB_SAMPLE_FRAC} — running on a "
+                        f"{DB_SAMPLE_FRAC*100:.0f}% sample (memory-constrained deployment mode)")
 if not _db_ready():
     st.sidebar.warning("⚠️ Database not built")
     with st.sidebar.expander("Build database", expanded=True):
         st.caption("Local run: drop Kaggle CSVs in ./data, then:")
         if st.button("Build from ./data"):
             with st.spinner("Loading CSVs into SQLite..."):
-                build_database()
+                build_database(sample_frac=DB_SAMPLE_FRAC)
             st.rerun()
         st.caption("Deployed/demo run: upload CSVs directly (not stored in the repo).")
         uploaded = st.file_uploader(
@@ -165,7 +190,7 @@ if not _db_ready():
             for f in uploaded:
                 (RAW_DATA_DIR_PATH / f.name).write_bytes(f.getbuffer())
             with st.spinner("Loading uploaded CSVs into SQLite..."):
-                build_database()
+                build_database(sample_frac=DB_SAMPLE_FRAC)
             st.rerun()
 else:
     st.sidebar.success("✅ Database ready")

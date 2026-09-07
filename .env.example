@@ -34,6 +34,13 @@ APP_PASSWORD = os.getenv("APP_PASSWORD", "")
 # run out of memory). Leave unset for local/Docker use to train on all data.
 MAX_TRAIN_ROWS = int(os.getenv("MAX_TRAIN_ROWS")) if os.getenv("MAX_TRAIN_ROWS") else None
 
+# Optional row-sampling fraction applied when the SQLite database itself is
+# built (0-1), for memory-constrained deployments. Unlike MAX_TRAIN_ROWS
+# (which only shrinks the training step), this shrinks the `application`
+# table everywhere — Overview, EDA, and Talk-to-Data all get lighter too.
+# Leave unset for local/Docker use to load the full dataset.
+DB_SAMPLE_FRAC = float(os.getenv("DB_SAMPLE_FRAC")) if os.getenv("DB_SAMPLE_FRAC") else None
+
 RANDOM_STATE = 42
 
 # Core table we build the model + chatbot on top of.
